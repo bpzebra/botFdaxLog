@@ -9,18 +9,20 @@ HOST = '127.0.0.1'
 PORT = 4002 # 7497  # Default TWS paper trading port. Use 7496 for live.
 CLIENT_ID = 1
 LOG_FILE = 'trades_log.csv'
+CONTRACT = '202506'
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 class FDAXLogger:
-    def __init__(self, host=HOST, port=PORT, client_id=CLIENT_ID, log_file=LOG_FILE):
+    def __init__(self, host=HOST, port=PORT, client_id=CLIENT_ID, log_file=LOG_FILE, contract_month=CONTRACT):
         self.ib = IB()
         self.host = host
         self.port = port
         self.client_id = client_id
         self.log_file = log_file
+        self.contract_month = contract_month
 
         # Ensure CSV header exists
         if not os.path.exists(self.log_file):
@@ -37,19 +39,9 @@ class FDAXLogger:
             raise
 
     def get_fdax_contract(self):
-        logger.info("Searching for FDAX front-month contract...")
-        # Search for FDAX futures on EUREX
-        cds = self.ib.reqContractDetails(Future(symbol='FDAX', exchange='EUREX', currency='EUR'))
-        if not cds:
-            raise ValueError("No FDAX contracts found.")
-        
-        # Sort by expiration and pick the closest one
-        contracts = [cd.contract for cd in cds]
-        contracts.sort(key=lambda x: x.lastTradeDateOrContractMonth)
-        
-        target = contracts[0]
-        logger.info(f"Selected contract: {target.localSymbol} (Expiry: {target.lastTradeDateOrContractMonth})")
-        return target
+        logger.info(f"Using FDAX contract month: {self.contract_month}")
+        contract = Future(symbol='FDAX', exchange='EUREX', currency='EUR', lastTradeDateOrContractMonth=self.contract_month)
+        return contract
 
     def start_logging(self):
         contract = self.get_fdax_contract()

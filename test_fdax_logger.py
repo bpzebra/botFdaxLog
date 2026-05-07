@@ -30,25 +30,12 @@ class TestFDAXLogger(unittest.TestCase):
             self.assertIn("timestamp,tradeprice,tradevolume", lines[0])
             self.assertIn("2023-10-27T10:00:00,15000.5,5", lines[1])
 
-    @patch('fdax_logger.IB')
-    def test_get_fdax_contract(self, MockIB):
-        mock_ib_instance = MockIB.return_value
-        
-        mock_cd1 = MagicMock()
-        mock_cd1.contract.lastTradeDateOrContractMonth = '202312'
-        mock_cd1.contract.localSymbol = 'FDAX DEC 23'
-        
-        mock_cd2 = MagicMock()
-        mock_cd2.contract.lastTradeDateOrContractMonth = '202403'
-        mock_cd2.contract.localSymbol = 'FDAX MAR 24'
-        
-        mock_ib_instance.reqContractDetails.return_value = [mock_cd2, mock_cd1]
-        
-        self.logger_bot.ib = mock_ib_instance
+    def test_get_fdax_contract(self):
         contract = self.logger_bot.get_fdax_contract()
-        
-        self.assertEqual(contract.lastTradeDateOrContractMonth, '202312')
-        self.assertEqual(contract.localSymbol, 'FDAX DEC 23')
+        self.assertEqual(contract.symbol, 'FDAX')
+        self.assertEqual(contract.lastTradeDateOrContractMonth, '202506')
+        self.assertEqual(contract.exchange, 'EUREX')
+        self.assertEqual(contract.currency, 'EUR')
 
 if __name__ == '__main__':
     unittest.main()
